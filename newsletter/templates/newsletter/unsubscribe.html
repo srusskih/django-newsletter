@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Unsubscribed" %} - {{block.super}}{% endblock %}
+
+{% block content %}
+  <div class="bg-blue">
+    <div class="sheet">
+      <form class="subscribe subscribe-success">
+      <h1 class="gray-color">
+        {% trans "You will no longer recieve emails from 123feelfree" %}
+      </h1>
+    </div>
+  </div>
+{% endblock content %}

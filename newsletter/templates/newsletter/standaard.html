@@ -1,0 +1,53 @@
+{% load thumbnail i18n %}{% load static from staticfiles %}
+<table width="800" border="0">
+    <tr>
+        <td colspan="3">
+          {% if obj.header %}
+            <img src="{{ SITE }}{{ obj.header.url }}" alt=''>
+          {% endif %}
+        </td>
+    </tr>
+    {% for item in obj.newsletteritem_set.all %} 
+    <tr>
+        <td valign="top" style="padding:0 20px 10px 20px;" width="180">
+          {% thumbnail  item.picture "180x180" crop="center" upscale=True as picture %}
+            <img src="{{ SITE }}{{ picture.url }}" alt="">
+          {% endthumbnail %}
+        </td>
+        <td valign="top" style="padding:0 0 10px 0; font-family:helvetica, arial; font-size:12px;" width="400">
+            <a style="padding:0; margin:0; font-size:20px; text-decoration:none; color:#52C2EA; font-weight:bold;" href="{{ item.get_absolute_url }}">{{ item.category }}</a><br>
+            <a style="padding:0 0 20px 0; font-size:19px; color:#616568; text-decoration:none; font-weight:bold;" href="{{ item.url }}">{{ item.title }}</a>
+            {{ item.body|linebreaks }}
+            {% if item.url %}<a href="{{ item.url }}" style="color:#0EA3E3;">{{ item.url_display_name }}</a>{% endif %}
+        </td>
+        {% if forloop.first %}
+        <td rowspan="{{ obj.newsletteritem_set.count }}" valign="top" width="200" style="padding:0 20px 10px 20px;">
+            {% for add in obj.newsletteradd_set.all %}
+            <a href="{{ add.url }}"><img border="0" style="border:0;" src="{{ SITE }}{{ add.adds.url }}" alt=""></a><br><br>
+            {% endfor %}
+        </td>
+        {% endif %}
+    </tr>
+    <tr>
+        <td colspan="2" style="padding:0 0 10px 20px;">
+          <img src="{{ SITE }}{% static 'images/stippelijn.png' %}" alt="">
+        </td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="3">
+          {% if obj.footer %}
+            <img src="{{ SITE }}{{ obj.footer.url }}" alt=''>
+          {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">
+            <p>
+            {% if unsubscribe_url %}
+                <a style="padding-left:20px; font-family:helvetica, arial; font-size:11px; color:#555;" href="{{ unsubscribe_url }}">{% trans "Klik hier indien u deze nieuwsbrief niet meer wil ontvangen" %}</a>
+            {% endif %}
+            </p>
+        </td>
+    <tr>
+</table>

@@ -1,0 +1,22 @@
+{% extends "admin/object_history.html" %}
+{% load i18n %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url admin:index %}">{% trans 'Home' %}</a> &rsaquo; 
+    <a href="{% url admin:app_list 'newsletter' %}">{% trans 'Newsletter' %}</a> &rsaquo; 
+    <a href="{% url admin:newsletter_externalsubscriber_changelist %}">{% trans 'External Subscriber' %}</a> &rsaquo; 
+    {% trans 'Import Subscribers' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+<div class="module">
+    <form action="" method="POST" enctype="multipart/form-data">{% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Upload">
+    </form>
+</div>
+</div>
+{% endblock %}
+<S-t_%9>
