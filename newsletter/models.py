@@ -1,5 +1,9 @@
 from django.db import models
+from django.conf import settings
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+
+from .unsubscribe import unsubscribe_url
 
 
 class Newsletter(models.Model):
@@ -17,7 +21,7 @@ class Newsletter(models.Model):
     )
 
     send_to = models.PositiveSmallIntegerField(_('send to'), choices=SEND_TYPES, default=ALL)
-    template = models.CharField(_('template'), max_length=50, choices=(('standaard', 'standaard'), ('flash', 'flash')))
+    template = models.CharField(_('template'), max_length=50, choices=(('standaard', 'standaard'),))
     header = models.ImageField(_('header'), upload_to='uploads/newsletter/header/%Y/%m', blank=True, null=True)
     footer = models.ImageField(_('footer'), upload_to='uploads/newsletter/footer/%Y/%m', blank=True, null=True)
     subject = models.CharField(_('subject'), max_length=200)
@@ -36,6 +40,19 @@ class Newsletter(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return 'newsletter:newsletter', (), {'pk': self.pk}
+
+    def render_for(self, user):
+        """ render newsmail for **user** """
+        context = {
+            'user': user,
+            'obj': self,
+            'unsubscribe_url': unsubscribe_url(user.email),
+            'SITE': 'http://%s' % settings.SITE_DOMAIN
+        }
+        return render_to_string(
+            'newsletter/%s.html' % self.template,
+            context
+        )
 
 
 class ExternalSubscriber(models.Model):

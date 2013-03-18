@@ -45,7 +45,7 @@ copy_newsletter.short_description = _("Make a copy")
 
 class SendingMixin(object):
     def test_send(self, obj):
-        url = reverse('admin:send_admin', args=[obj.pk])
+        url = reverse('admin:send_admin', args=(obj.pk,))
         return u'<a href="%s">%s</a>' % (url, _('Send admin'))
 
     test_send.allow_tags = True
@@ -53,7 +53,7 @@ class SendingMixin(object):
 
     def send(self, obj):
         if obj.status == self.model.NEW:
-            url = reverse('admin:add_to_queue', args=[obj.pk])
+            url = reverse('admin:add_to_queue', args=(obj.pk,))
             return u'<a href="%s">%s</a>' % (url, _('Send'))
         return ""
 
@@ -68,28 +68,25 @@ class SendingMixin(object):
             return update_wrapper(wrapper, view)
 
         urlpatterns = super(SendingMixin, self).get_urls()
-        urlpatterns = patterns('',
-                               url(r'^(.+)/send_admin/$', wrap(self.send_admin),
-                                   name='send_admin'),
-                               url(r'^(.+)/add_to_queue/$',
-                                   wrap(self.add_to_queue),
-                                   name='add_to_queue'),
+        urlpatterns = patterns(
+            '',
+            url(r'^(.+)/send_admin/$', wrap(self.send_admin),
+                name='send_admin'),
+            url(r'^(.+)/add_to_queue/$', wrap(self.add_to_queue),
+                name='add_to_queue'),
         ) + urlpatterns
         return urlpatterns
 
     def send_admin(self, request, object_id):
+        """ send a newsletter with object_id to current user """
         opts = self.model._meta
         user = request.user
         letter = get_object_or_404(self.queryset(request), id=object_id)
-        context = {
-            'user': user,
-            'obj': letter,
-            'SITE': 'http://%s' % request.get_host()
-        }
-        message = render_to_string('newsletter/%s.html' % letter.template,
-                                   context)
-        email = EmailMessage(letter.subject, message,
-                             settings.DEFAULT_FROM_EMAIL, [user.email])
+        email = EmailMessage(
+            subject=letter.subject,
+            body=letter.render_for(user),
+            to=[user.email]
+        )
         email.content_subtype = 'html'
         email.send()
         return redirect(
@@ -98,7 +95,6 @@ class SendingMixin(object):
 
     def add_to_queue(self, request, object_id):
         """ push newsletters to queue """
-        # change object permissions required
         if not self.has_change_permission(request):
             return HttpResponseForbidden("Not enough permissions")
 

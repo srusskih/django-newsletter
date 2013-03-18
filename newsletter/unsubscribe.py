@@ -1,8 +1,12 @@
 import hashlib
 from django.conf import settings
-from accounts.models import Account
 from django.core.urlresolvers import reverse
-from newsletter.models import ExternalSubscriber
+from accounts.models import Account
+from .models import ExternalSubscriber
+
+
+class InvalidCode(Exception):
+    pass
 
 
 def generate_code(email):
@@ -18,10 +22,6 @@ def unsubscribe_url(email):
     domain = settings.SITE_DOMAIN
     path = reverse('newsletter:unsubscribe', args=[code, email])
     return u'http://%s%s' % (domain, path)
-
-
-class InvalidCode(Exception):
-    pass
 
 
 def unsubscribe(code, email):

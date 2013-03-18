@@ -1,18 +1,18 @@
+from datetime import datetime
+from django.db.models import get_model
 from django.core.management.base import BaseCommand
-from newsletter.models import Newsletter
-from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
 from django.conf import settings
-from datetime import datetime
+
 from accounts.models import Account
-from newsletter.unsubscribe import unsubscribe_url
-from newsletter.models import ExternalSubscriber
 
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         now = datetime.now()
         self.site = settings.SITE_DOMAIN
+        ExternalSubscriber = get_model('newsletters', 'ExternalSubscriber')
+        Newsletter = get_model('newsletters', 'Newsletter')
 
         external = list(ExternalSubscriber.objects.filter(is_subscribed=True, email__contains="@"))
         internal = list(Account.objects.filter(is_subscribed=True, email__contains="@"))
@@ -49,14 +49,12 @@ class Command(BaseCommand):
                     pass
 
     def do_send(self, obj, user):
-        print user.email
-        context = {
-            'obj': obj,
-            'unsubscribe_url': unsubscribe_url(user.email),
-            'SITE': 'http://%s' % self.site
-        }
-        message = render_to_string('newsletter/%s.html' % obj.template, context)
-        email = EmailMessage(obj.subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+        message = obj.render_for(user)
+        email = EmailMessage(
+            subject=obj.subject,
+            body=message,
+            to=[user.email]
+        )
         email.content_subtype = 'html'
         try:
             email.send()
