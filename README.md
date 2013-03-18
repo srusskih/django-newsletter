@@ -19,7 +19,7 @@ Installation
 
 		urlpatterns = patterns('',
 			# ..
-			url(r'^newsletter/', include(namespace="newsletter")),
+			url(r'^newsletter/', include('newsletter.urls', namespace="newsletter")),
 			# ..
 		)
 
