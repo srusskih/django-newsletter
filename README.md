@@ -1,4 +1,3 @@
-
 Django-Newsletter
 =================
 
@@ -8,21 +7,21 @@ Yeat another newsletter app to create and send mails to subscribers
 Installation
 -----------
 
-1. Add `'newsletter', to `INSTALLED_APPS`
+1. update `settings.py`
 
-	INSTALLED_APPS = (
-		# ...
-		'newsletter',
-		# ...
-	)
+		INSTALLED_APPS = (
+			# ...
+			'newsletter',
+			# ...
+		)
 
-2. Insert `url(r'^newsletter/', include(namespace="newsletter")),`, to `urls.py`
+2. update `urls.py`
 
-	urlpatterns = patterns('',
-		# ..
-		url(r'^newsletter/', include(namespace="newsletter")),
-		# ..
-	)
+		urlpatterns = patterns('',
+			# ..
+			url(r'^newsletter/', include(namespace="newsletter")),
+			# ..
+		)
 
 
 3. Create tables with django `syncdb` command.
