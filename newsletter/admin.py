@@ -31,25 +31,14 @@ def copy_newsletter(modeladmin, request, queryset):
         newsletter.save()
 
         for item in original_newsletter.newsletteritem_set.all():
-            NewsletterItem.objects.create(
-                newsletter=newsletter,
-                order=item.order,
-                category=item.category,
-                title=item.title,
-                body=item.body,
-                url=item.url,
-                url_display_name=item.url_display_name,
-                picture=item.picture
-            )
+            item.id = None
+            item.newsletter = newsletter
+            item.save()
 
-        for add_ in original_newsletter.newsletteradd_set.all():
-            NewsletterAdd.objects.create(
-                newsletter=newsletter,
-                order=add_.order,
-                adds=add_.adds,
-                url=add_.url
-            )
-
+        for _add in original_newsletter.newsletteradd_set.all():
+            _add.id = None
+            _add.newsletter = newsletter
+            _add.save()
 
 copy_newsletter.short_description = _("Make a copy")
 
