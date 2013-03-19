@@ -1,25 +1,19 @@
-from models import Newsletter
-from utils.views import render_to
-from newsletter.unsubscribe import unsubscribe as do_unsubscribe, unsubscribe_url, InvalidCode
 from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+
+from .models import Newsletter
+from .unsubscribe import unsubscribe as do_unsubscribe, InvalidCode
+from .shortcuts import render_newsletter
 
 
-@render_to('newsletter/standaard.html')
 def detail(request, pk):
-    url = ''
-    if request.user.is_authenticated():
-        url = unsubscribe_url(request.user.email)
-    return {
-        'user': request.user,
-        'obj': Newsletter.objects.get(pk=pk), 'SITE':'',
-        'unsubscribe_url': url
-    }
+    newsletter = get_object_or_404(Newsletter, pk=pk)
+    return HttpResponse(render_newsletter(newsletter, request.user))
 
 
-@render_to('newsletter/unsubscribe.html')
 def unsubscribe(request, code, email):
     try:
         do_unsubscribe(code, email)
     except InvalidCode:
         return HttpResponse('Invalid code')
-    return {}
+    return render(request, 'newsletter/unsubscribe.html', {})

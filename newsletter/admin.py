@@ -1,11 +1,9 @@
-from django.conf import settings
 from django.conf.urls import patterns, url
 from django.contrib import admin
 from django.core.mail import EmailMessage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect, get_object_or_404
-from django.template.loader import render_to_string
 from django.utils.functional import update_wrapper
 from django.utils.translation import ugettext_lazy as _
 

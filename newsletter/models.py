@@ -1,9 +1,7 @@
 from django.db import models
-from django.conf import settings
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from .unsubscribe import unsubscribe_url
+from .shortcuts import render_newsletter
 
 
 class Newsletter(models.Model):
@@ -43,16 +41,7 @@ class Newsletter(models.Model):
 
     def render_for(self, user):
         """ render newsmail for **user** """
-        context = {
-            'user': user,
-            'obj': self,
-            'unsubscribe_url': unsubscribe_url(user.email),
-            'SITE': 'http://%s' % settings.SITE_DOMAIN
-        }
-        return render_to_string(
-            'newsletter/%s.html' % self.template,
-            context
-        )
+        return render_newsletter(self, user)
 
 
 class ExternalSubscriber(models.Model):
