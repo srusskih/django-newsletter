@@ -3,3 +3,4 @@
 *.swo
 .idea
 *.sqlite3
+example_project/uploads/

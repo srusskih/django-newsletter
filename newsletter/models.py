@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from .shortcuts import render_newsletter
 
 
 class Newsletter(models.Model):
@@ -71,6 +70,7 @@ class Newsletter(models.Model):
 
     def render_for(self, user):
         """ render newsmail for **user** """
+        from .shortcuts import render_newsletter
         return render_newsletter(self, user)
 
 

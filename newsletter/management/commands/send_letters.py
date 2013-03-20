@@ -1,23 +1,28 @@
 from datetime import datetime
-from django.db.models import get_model
-from django.core.management.base import BaseCommand
-from django.core.mail import EmailMessage
-from django.conf import settings
 
-from accounts.models import Account
+from django.core.mail import EmailMessage
+from django.core.management.base import BaseCommand
+
+from newsletter.conf import SITE_DOMAIN, FROM_NEWSLETTER, INTERNAL_USER_MODEL
+from newsletter.models import Newsletter, ExternalSubscriber
 
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         now = datetime.now()
-        self.site = settings.SITE_DOMAIN
-        ExternalSubscriber = get_model('newsletters', 'ExternalSubscriber')
-        Newsletter = get_model('newsletters', 'Newsletter')
+        self.site = SITE_DOMAIN
+        Account = INTERNAL_USER_MODEL
 
-        external = list(ExternalSubscriber.objects.filter(is_subscribed=True, email__contains="@"))
-        internal = list(Account.objects.filter(is_subscribed=True, email__contains="@"))
+        external = list(ExternalSubscriber.objects.
+                        filter(is_subscribed=True, email__contains="@"))
+        internal = list(Account.objects.
+                        filter(is_subscribed=True, email__contains="@"))
+        newsletters_to_send = list(
+            Newsletter.objects.filter(status=Newsletter.QUEUED,
+                                      publication_date__lt=now)
+        )
 
-        for obj in Newsletter.objects.filter(status=Newsletter.QUEUED, publication_date__lt=now):
+        for obj in newsletters_to_send:
             obj.status = Newsletter.SENT
             obj.save()
 
@@ -40,7 +45,7 @@ class Command(BaseCommand):
                 admin_email = EmailMessage(
                     '[123FEELFREE NEWSLETTER NOTE]',
                     message,
-                    settings.FROM_NEWSLETTER,
+                    FROM_NEWSLETTER,
                     ['onno@code-on.be']
                 )
                 try:

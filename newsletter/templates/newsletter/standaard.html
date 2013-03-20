@@ -1,4 +1,5 @@
-{% load thumbnail i18n %}{% load static from staticfiles %}
+{% load static from staticfiles %}
+{% load i18n %}
 <table width="800" border="0">
     <tr>
         <td colspan="3">
@@ -10,9 +11,7 @@
     {% for item in obj.newsletteritem_set.all %} 
     <tr>
         <td valign="top" style="padding:0 20px 10px 20px;" width="180">
-          {% thumbnail  item.picture "180x180" crop="center" upscale=True as picture %}
-            <img src="{{ SITE }}{{ picture.url }}" alt="">
-          {% endthumbnail %}
+            <img src="{{ SITE }}{{ item.picture.url }}" alt="">
         </td>
         <td valign="top" style="padding:0 0 10px 0; font-family:helvetica, arial; font-size:12px;" width="400">
             <a style="padding:0; margin:0; font-size:20px; text-decoration:none; color:#52C2EA; font-weight:bold;" href="{{ item.get_absolute_url }}">{{ item.category }}</a><br>
@@ -45,7 +44,7 @@
         <td colspan="3">
             <p>
             {% if unsubscribe_url %}
-                <a style="padding-left:20px; font-family:helvetica, arial; font-size:11px; color:#555;" href="{{ unsubscribe_url }}">{% trans "Klik hier indien u deze nieuwsbrief niet meer wil ontvangen" %}</a>
+                <a style="padding-left:20px; font-family:helvetica, arial; font-size:11px; color:#555;" href="{{ unsubscribe_url }}">{% trans "Click here to unsubscriber from newsletters" %}</a>
             {% endif %}
             </p>
         </td>
