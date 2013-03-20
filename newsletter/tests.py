@@ -1,5 +1,5 @@
 import mock
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.test import TestCase
 from django.core import mail
 from django.core.management import call_command
@@ -67,7 +67,6 @@ class TestGetInternalUsserModel(TestCase):
 
 
 class TestSendLettersCommand(TestCase):
-
     @mock.patch('newsletter.models.INTERNAL_USER_MODEL.objects.filter')
     def test_basic(self, mocked_user_manager):
         """ get newletter from queue to send
@@ -108,6 +107,68 @@ class TestSendLettersCommand(TestCase):
         letter.save()
         call_command('send_letters')
         self.assertEquals(len(mail.outbox), 1 + len(settings.ADMINS))
+
+
+class TestNewsletterModel(TestCase):
+    @mock.patch('newsletter.models.INTERNAL_USER_MODEL.objects.filter')
+    def test__get_subscribers__internal_only(self, mocked_manager):
+        mocked_manager.return_value = INTERNAL_USER_MODEL.objects.all()
+        letter = create_newsletter()
+        letter.send_to = Newsletter.ONLY_INTERNAL
+        letter.save()
+        self.assertEquals(len(letter.get_subscribers()), 1)
+
+    @mock.patch('newsletter.models.INTERNAL_USER_MODEL.objects.filter')
+    def test__get_subscribers__external_only(self, mocked_manager):
+        mocked_manager.return_value = INTERNAL_USER_MODEL.objects.all()
+        letter = create_newsletter()
+        letter.send_to = Newsletter.ONLY_EXTERNAL
+        letter.save()
+
+        self.assertEquals(len(letter.get_subscribers()), 0)
+
+        ExternalSubscriber.objects.create(email='test@test.com')
+        self.assertEquals(len(letter.get_subscribers()), 1)
+
+    @mock.patch('newsletter.models.INTERNAL_USER_MODEL.objects.filter')
+    def test__get_subscribers__all(self, mocked_manager):
+        mocked_manager.return_value = INTERNAL_USER_MODEL.objects.all()
+        letter = create_newsletter()
+        letter.send_to = Newsletter.ALL
+        letter.save()
+
+        self.assertEquals(len(letter.get_subscribers()), 1)
+
+        ExternalSubscriber.objects.create(email='test@test.com')
+        self.assertEquals(len(letter.get_subscribers()), 2)
+
+    def test__get_quote(self):
+        """ return list of queued newsletters that should be published now """
+
+        # publication "now" + new letter
+        letter = create_newsletter()
+        letter.publication_date = datetime.now() - timedelta(minutes=1)
+        letter.status = Newsletter.NEW
+        letter.save()
+        self.assertQuerysetEqual(Newsletter.get_queue(), [])
+
+        # publication "bow" + letter was sent
+        letter.publication_date = datetime.now() - timedelta(minutes=1)
+        letter.status = Newsletter.SENT
+        letter.save()
+        self.assertQuerysetEqual(Newsletter.get_queue(), [])
+
+        # publicsation "now" + in queue
+        letter.publication_date = datetime.now() - timedelta(minutes=1)
+        letter.status = Newsletter.QUEUED
+        letter.save()
+        self.assertQuerysetEqual(Newsletter.get_queue(), [repr(letter)])
+
+        # publicsation "later" + in queue
+        letter.publication_date = datetime.now() + timedelta(minutes=5)
+        letter.status = Newsletter.QUEUED
+        letter.save()
+        self.assertQuerysetEqual(Newsletter.get_queue(), [])
 
 
 # image for tests
