@@ -1,14 +1,20 @@
 from django.test import TestCase
 from django.utils import timezone
-from django.template.loader import render_to_string
+
 from .unsubscribe import unsubscribe_url, generate_code, check_code
-from .models import Newsletter, NewsletterItem
+from .models import Newsletter, NewsletterItem, ExternalSubscriber
 
 
 class TestUnsubscribeUrl(TestCase):
     def test_code(self):
-        assert check_code(generate_code('email@emalil.com'), 'email@emalil.com')
-        assert check_code(generate_code('email@emalil.com'), 'email@emalil2.com') == False
+        self.assert_(check_code(
+            generate_code('email@emalil.com'),
+            'email@emalil.com'
+        ))
+        self.assertFalse(check_code(
+            generate_code('email@emalil.com'),
+            'email@emalil2.com'
+        ))
         print unsubscribe_url('admin@admin.com')
 
 
@@ -29,9 +35,6 @@ class TestNewsletterRendering(TestCase):
             url='http://google.com',
             picture=None
         )
-
-        context = {
-            'user': {},
-            'obj': letter,
-        }
-        render_to_string('newsletter/%s.html' % letter.template, context)
+        user = ExternalSubscriber(email='test@test.com')
+        html = letter.render_for()
+        self.assertIn(generate_code(user.email), html)

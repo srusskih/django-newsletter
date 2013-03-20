@@ -3,12 +3,11 @@ from django.shortcuts import render, get_object_or_404
 
 from .models import Newsletter
 from .unsubscribe import unsubscribe as do_unsubscribe, InvalidCode
-from .shortcuts import render_newsletter
 
 
 def detail(request, pk):
     newsletter = get_object_or_404(Newsletter, pk=pk)
-    return HttpResponse(render_newsletter(newsletter, request.user))
+    return HttpResponse(newsletter.render_for(request.user))
 
 
 def unsubscribe(request, code, email):
