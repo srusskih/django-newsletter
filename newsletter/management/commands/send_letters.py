@@ -1,67 +1,42 @@
+import itertools
 from datetime import datetime
 
-from django.core.mail import EmailMessage
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 
-from newsletter.conf import SITE_DOMAIN, FROM_NEWSLETTER, INTERNAL_USER_MODEL
-from newsletter.models import Newsletter, ExternalSubscriber
+from newsletter.conf import SITE_DOMAIN
+from newsletter.models import Newsletter
 
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
-        now = datetime.now()
         self.site = SITE_DOMAIN
-        Account = INTERNAL_USER_MODEL
-
-        external = list(ExternalSubscriber.objects.
-                        filter(is_subscribed=True, email__contains="@"))
-        internal = list(Account.objects.
-                        filter(is_subscribed=True, email__contains="@"))
-        newsletters_to_send = list(
-            Newsletter.objects.filter(status=Newsletter.QUEUED,
-                                      publication_date__lt=now)
-        )
+        newsletters_to_send = Newsletter.get_queue().iterator()
 
         for obj in newsletters_to_send:
             obj.status = Newsletter.SENT
             obj.save()
 
-            user_list = []
-            if obj.send_to == Newsletter.ALL:
-                user_list = internal + external
-            elif obj.send_to == Newsletter.ONLY_INTERNAL:
-                user_list = internal
-            elif obj.send_to == Newsletter.ONLY_EXTERNAL:
-                user_list = external
-
-            for i, user in enumerate(user_list):
+            user_list = iter(obj.get_subscribers())
+            counter = itertools.count()
+            for user in user_list:
+                counter.next()
                 try:
-                    self.do_send(obj, user)
+                    obj.send(user)
                 except Exception, e:
                     print e
-            if i:
-                message = 'er zijn %s nieuwsbrieven is verzonden %s' %\
-                    (i, datetime.now().strftime('%H:%m %d %m %Y'))
-                admin_email = EmailMessage(
-                    '[123FEELFREE NEWSLETTER NOTE]',
-                    message,
-                    FROM_NEWSLETTER,
-                    ['onno@code-on.be']
-                )
-                try:
-                    admin_email.send()
-                except Exception:
-                    pass
 
-    def do_send(self, obj, user):
-        message = obj.render_for(user)
-        email = EmailMessage(
-            subject=obj.subject,
-            body=message,
-            to=[user.email]
+            send_report_to_admin(counter.next())
+
+
+def send_report_to_admin(email_count):
+    message = 'er zijn %s nieuwsbrieven is verzonden %s' % (
+        email_count, datetime.now().strftime('%H:%m %d %m %Y')
+    )
+    try:
+        mail_admins(
+            subject='[123FEELFREE NEWSLETTER NOTE]',
+            message=message,
         )
-        email.content_subtype = 'html'
-        try:
-            email.send()
-        except Exception, e:
-            print e
+    except Exception, e:
+        print "Report sent failed with error: %r" % e

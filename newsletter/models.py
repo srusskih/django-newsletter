@@ -1,6 +1,8 @@
+from datetime import datetime
+from django.core.mail import EmailMessage
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
+from .conf import INTERNAL_USER_MODEL
 
 
 class Newsletter(models.Model):
@@ -72,6 +74,47 @@ class Newsletter(models.Model):
         """ render newsmail for **user** """
         from .shortcuts import render_newsletter
         return render_newsletter(self, user)
+
+    def get_subscribers(self):
+        subscribers = []
+
+        if self.send_to == self.ONLY_EXTERNAL or\
+                self.send_to == Newsletter.ALL:
+            subscribers.extend(
+                list(
+                    ExternalSubscriber.objects.
+                    filter(is_subscribed=True, email__contains="@")
+                )
+            )
+
+        if INTERNAL_USER_MODEL:
+            if self.send_to == self.ONLY_INTERNAL or\
+                    self.send_to == Newsletter.ALL:
+                subscribers.extend(
+                    list(
+                        INTERNAL_USER_MODEL.objects.
+                        filter(is_subscribed=True, email__contains="@")
+                    )
+                )
+        return subscribers
+
+    @classmethod
+    def get_queue(cls):
+        return cls.objects.filter(
+            status=Newsletter.QUEUED,
+            publication_date__lt=datetime.now()
+        )
+
+    def send(self, user):
+        message = self.render_for(user)
+        email = EmailMessage(
+            subject=self.subject,
+            body=message,
+            to=[user.email]
+        )
+        email.content_subtype = 'html'
+        email.send()
+        return email
 
 
 class ExternalSubscriber(models.Model):
