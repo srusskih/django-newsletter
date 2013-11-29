@@ -26,7 +26,7 @@ Installation
 3. add `is_subscribed = models.BooleanField()` to your intenal user model
 
 
-4. Create tables with django `syncdb` command (and create and rub migrations for internal user's model if required)
+4. Create tables with django `syncdb` command (and create and run migrations for internal user's model if required)
 
 
 5. Done!
