@@ -35,4 +35,4 @@ Installation
 License
 -------
 
-GNU GPL v3
+BSD
